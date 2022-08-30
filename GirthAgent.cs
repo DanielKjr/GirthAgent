@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace GirthAgent
 {
@@ -16,19 +17,24 @@ namespace GirthAgent
         private float y;
         private float x;
 
+        private int screenSizeX = 992;
+        private int screenSizeY = 559;
+
+
         public GirthAgent(IPropertyStorage propertyStorage) : base(propertyStorage)
         {
             rand = new Random();
 
-            MovementSpeed = 45;
-            Strength = 65;
-            Health = 30;
+            MovementSpeed = 35;
+            Strength = 35;
+            Health = 70;
             Eyesight = 30;
             Endurance = 25;
             Dodge = 55;
 
             y = rand.Next(-1, 2);
             x = rand.Next(-1, 2);
+
         }
         public override void ActionResultCallback(bool success)
         {
@@ -44,72 +50,70 @@ namespace GirthAgent
             List<IEntity> plants = otherEntities.FindAll(x => x is Plant &&
            AIVector.Distance(Position, x.Position) < AIModifiers.maxFeedingRange);
 
-            List<Agent> agents = otherEntities.FindAll(a => a is Agent).ConvertAll<Agent>(a => (Agent)a);
+            List<Agent> agents = otherEntities.FindAll(a => a is GirthAgent).ConvertAll<Agent>(a => (GirthAgent)a);
 
             Agent randAgent = null;
             randAgent = agents[rand.Next(agents.Count)];
 
 
 
-            switch (rand.Next(5))
+
+
+            if (randAgent != null && randAgent.GetType() == typeof(GirthAgent) && randAgent != this)
             {
-                case 1://Procreate
-                    if (randAgent != null && randAgent.GetType() == typeof(GirthAgent))
-                    {
-                        return new Procreate(randAgent);
-                    }
-                    break;
+                return new Procreate(randAgent);
+            }
 
-                case 2: //attack
-                    if (nearEnemies.Count > 0 && nearEnemies.GetType() != typeof(GirthAgent))
-                    {
-                        return new Attack((Agent)nearEnemies[0]);
-                    }
-                    break;
-                case 3: //eat
-                    if (plants.Count > 0)
-                    {
-                        return new Feed((Plant)plants[0]);
-                    }
-                    break;
-                case 4: //move
+            
+           
 
-                    MovementDirection(previousPos, ref x, ref y);
-                    previousPos = Position;
-                    return new Move(new AIVector(x, y));
-
-                default:
-                    return new Defend();
-
+            if (nearEnemies.Count > 0 && nearEnemies.GetType() != typeof(GirthAgent))
+            {
+                return new Attack((Agent)nearEnemies[0]);
             }
 
 
+            if (plants.Count > 0)
+            {
+                return new Feed((Plant)plants[0]);
+            }
 
 
+            MovementDirection(ref x, ref y);
 
-            //  MovementDirection(previousPos, ref x, ref y);
-            previousPos = Position;
             return new Move(new AIVector(x, y));
+
+
+
+
+
+            //  MovementDirection(ref x, ref y);
+
+            //  return new Move(new AIVector(x, y));
+
+
+
+
+
+
 
 
 
         }
 
-        private void MovementDirection(AIVector position, ref float x, ref float y)
+        private void MovementDirection(ref float x, ref float y)
         {
-            if (position != null && Position == position)
+            if (Position.X == screenSizeX || Position.Y == screenSizeY
+                || Position.X == 0 || Position.Y == 0)
             {
-
-
-
                 x = rand.Next(-1, 2);
                 y = rand.Next(-1, 2);
 
-
-
-
-
-
+            }
+            if (x == 0 && y == 0)
+            {
+                x = rand.Next(-1, 2);
+                y = rand.Next(-1, 2);
             }
         }
     }
